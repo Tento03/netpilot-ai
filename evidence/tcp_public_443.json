@@ -1,0 +1,28 @@
+{
+  "tool_call_id": "1ca21f160e3142f494feca91d869605e",
+  "tool": "check_tcp_port",
+  "args": {
+    "host": "www.google.com",
+    "port": 443
+  },
+  "started_at": "2026-11-18T04:39:22.668457Z",
+  "duration_ms": 48,
+  "status": "ok",
+  "data": {
+    "host": "www.google.com",
+    "port": 443,
+    "attempts": [
+      {
+        "ip": "216.239.38.120",
+        "outcome": "open",
+        "ms": 36.1
+      }
+    ],
+    "ip": "216.239.38.120",
+    "open": true,
+    "reason": null,
+    "connect_ms": 36.1
+  },
+  "error": null,
+  "simulated": false
+}

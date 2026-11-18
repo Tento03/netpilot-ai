@@ -1,0 +1,26 @@
+{
+  "tool_call_id": "e9a3cd3a6c354a2f85ea0d55126c241b",
+  "tool": "http_timing",
+  "args": {
+    "url": "https://www.google.com/"
+  },
+  "started_at": "2026-11-18T04:39:26.730709Z",
+  "duration_ms": 174,
+  "status": "ok",
+  "data": {
+    "host": "www.google.com",
+    "ip": "216.239.38.120",
+    "status_code": 200,
+    "redirected": false,
+    "dns_ms": 5.9,
+    "tcp_ms": 39.2,
+    "tls_ms": 47.6,
+    "tls_version": "TLSv1.3",
+    "ttfb_ms": 56.0,
+    "total_ms": 173.8,
+    "body_bytes": 16852,
+    "ips_tried": 1
+  },
+  "error": null,
+  "simulated": false
+}

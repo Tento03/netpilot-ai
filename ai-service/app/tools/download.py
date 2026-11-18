@@ -37,6 +37,9 @@ def measure_download(url: str, max_bytes: int = 1_000_000, ctx: ToolContext | No
             "truncated": r["truncated"],  # None | deadline | read_timeout | connection_error
             "low_confidence": r["mbps"] is None or r["measured_bytes"] < LOW_CONFIDENCE_BYTES,
             "ttfb_ms": r["ttfb_ms"],
+            "dns_ms": conn.dns_ms,
+            "tcp_ms": conn.tcp_ms,
+            "tls_ms": conn.tls_ms,
         }
 
     return execute_tool("measure_download", {"url": url, "max_bytes": max_bytes}, work)

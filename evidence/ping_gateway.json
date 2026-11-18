@@ -1,0 +1,42 @@
+{
+  "tool_call_id": "7b00448d80e34dc38879143d0fe3110d",
+  "tool": "ping_host",
+  "args": {
+    "host": "10.17.11.254",
+    "count": 10
+  },
+  "started_at": "2026-11-18T04:38:38.388589Z",
+  "duration_ms": 9126,
+  "status": "ok",
+  "data": {
+    "sent": 10,
+    "received": 10,
+    "lost": 0,
+    "loss_pct": 0.0,
+    "reachable": true,
+    "min_ms": 2.0,
+    "avg_ms": 3.0,
+    "max_ms": 6.0,
+    "jitter_ms": 1.2,
+    "rtts_ms": [
+      2.0,
+      2.0,
+      6.0,
+      4.0,
+      3.0,
+      2.0,
+      2.0,
+      2.0,
+      4.0,
+      3.0
+    ],
+    "sub_ms_replies": 0,
+    "unreachable_replies": 0,
+    "host": "10.17.11.254",
+    "resolved_ips": [
+      "10.17.11.254"
+    ]
+  },
+  "error": null,
+  "simulated": false
+}

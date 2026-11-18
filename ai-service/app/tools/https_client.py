@@ -11,6 +11,7 @@ import time
 from dataclasses import dataclass
 from typing import Any
 from urllib.parse import urlsplit
+import truststore
 
 from app.config import load_settings
 from app.tools.base import ToolContext, ToolFailure, ToolTimeout, resolve_host
@@ -39,6 +40,9 @@ class Connection:
 def _ms(a: float, b: float) -> float:
     return round((b - a) * 1000, 1)
 
+def _make_context() -> ssl.SSLContext:
+    """Verify against the OS trust store (as curl and browsers do), not Python's static bundle."""
+    return truststore.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
 
 def connect(url: str, ctx: ToolContext) -> Connection:
     url = validate_url(url, load_settings().allowed_http_hosts)
@@ -77,7 +81,7 @@ def connect(url: str, ctx: ToolContext) -> Connection:
     t2 = time.perf_counter()
     try:
         raw.settimeout(CONNECT_TIMEOUT_S)
-        tls = ssl.create_default_context().wrap_socket(raw, server_hostname=host)
+        tls = _make_context().wrap_socket(raw, server_hostname=host)
     except TimeoutError:
         raw.close()
         raise ToolTimeout("tls handshake timed out") from None

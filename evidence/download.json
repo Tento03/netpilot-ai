@@ -1,0 +1,30 @@
+{
+  "tool_call_id": "1e95bf1acf184cbb83b74c46f168735d",
+  "tool": "measure_download",
+  "args": {
+    "url": "https://speed.cloudflare.com/__down?bytes=2000000",
+    "max_bytes": 1000000
+  },
+  "started_at": "2026-11-18T04:39:27.410156Z",
+  "duration_ms": 483,
+  "status": "ok",
+  "data": {
+    "host": "speed.cloudflare.com",
+    "ip": "162.159.140.220",
+    "status_code": 200,
+    "bytes_received": 1007616,
+    "measured_bytes": 1007566,
+    "transfer_ms": 331.5,
+    "throughput_mbps": 24.32,
+    "max_bytes": 1000000,
+    "limit_reached": true,
+    "truncated": null,
+    "low_confidence": false,
+    "ttfb_ms": 46.7,
+    "dns_ms": 5.5,
+    "tcp_ms": 42.1,
+    "tls_ms": 57.0
+  },
+  "error": null,
+  "simulated": false
+}

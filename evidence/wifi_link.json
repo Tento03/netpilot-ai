@@ -1,0 +1,25 @@
+{
+  "tool_call_id": "da3f122bd031461a808eddba85132dcf",
+  "tool": "get_wifi_link_info",
+  "args": {},
+  "started_at": "2026-11-18T04:33:00.561566Z",
+  "duration_ms": 118,
+  "status": "ok",
+  "data": {
+    "interface_name": "Wi-Fi",
+    "state": "connected",
+    "connected": true,
+    "ssid": "SSID-REDACTED",
+    "bssid_masked": "XX:XX:XX:XX:XX:XX",
+    "band": "5 GHz",
+    "channel": 36,
+    "radio_type": "802.11ac",
+    "authentication": "WPA2-Personal",
+    "receive_rate_mbps": 780.0,
+    "transmit_rate_mbps": 780.0,
+    "signal_pct": 81,
+    "rssi_dbm": -68
+  },
+  "error": null,
+  "simulated": false
+}

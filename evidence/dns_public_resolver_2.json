@@ -1,0 +1,28 @@
+{
+  "tool_call_id": "2a0fa4c0887c459ab353e1f957770924",
+  "tool": "check_dns",
+  "args": {
+    "domain": "www.google.com",
+    "resolver": "1.1.1.1"
+  },
+  "started_at": "2026-11-18T04:45:41.636039Z",
+  "duration_ms": 12,
+  "status": "ok",
+  "data": {
+    "domain": "www.google.com",
+    "results": [
+      {
+        "resolver": "1.1.1.1",
+        "ok": true,
+        "rcode": "NOERROR",
+        "time_ms": 12.7,
+        "ips": [
+          "216.239.38.120"
+        ]
+      }
+    ],
+    "slowest_ms": 12.7
+  },
+  "error": null,
+  "simulated": false
+}

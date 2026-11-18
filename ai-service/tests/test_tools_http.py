@@ -132,7 +132,7 @@ def test_http_timing_certificate_failure(monkeypatch):
         def wrap_socket(self, s, server_hostname):
             raise ssl.SSLCertVerificationError("bad cert")
 
-    monkeypatch.setattr(hc.ssl, "create_default_context", lambda: Ctx())
+    monkeypatch.setattr(hc, "_make_context", lambda: Ctx())
     r = http_timing("https://example.com/")
     assert r.error.code == "tls_verification_failed" and raw.closed is True
 
@@ -193,3 +193,36 @@ def test_download_mid_stream_timeout_returns_partial(monkeypatch):
 def test_download_url_must_be_allowlisted(monkeypatch):
     monkeypatch.setattr(hc, "resolve_host", lambda h: pytest.fail("no network"))
     assert measure_download("https://evil.com/big", 1000).error.code == "host_not_allowed"
+
+def test_download_reports_connection_phase_timings(monkeypatch):
+    patch_conn(monkeypatch, dl, make_conn(
+        [OKHEAD + b"x" * 1000, b"y" * 50_000], delay=0.01))
+    d = measure_download("https://example.com/f", 1_000_000).data
+    assert d["dns_ms"] == 5.0
+    assert d["tcp_ms"] == 20.0
+    assert d["tls_ms"] == 40.0
+
+
+def test_http_timing_host_is_plain_hostname(monkeypatch):
+    # guard: "host" is evidence in reports, must never contain markdown or URL syntax
+    patch_conn(monkeypatch, ht, make_conn([OKHEAD + b"hello", b""]))
+    host = http_timing("https://example.com/").data["host"]
+    assert host == "example.com"
+    assert not any(c in host for c in "[]()/:")
+
+
+def test_download_reports_connection_phase_timings(monkeypatch):
+    patch_conn(monkeypatch, dl, make_conn(
+        [OKHEAD + b"x" * 1000, b"y" * 50_000], delay=0.01))
+    d = measure_download("https://example.com/f", 1_000_000).data
+    assert d["dns_ms"] == 5.0
+    assert d["tcp_ms"] == 20.0
+    assert d["tls_ms"] == 40.0
+
+
+def test_http_timing_host_is_plain_hostname(monkeypatch):
+    # guard: "host" is evidence in reports, must never contain markdown or URL syntax
+    patch_conn(monkeypatch, ht, make_conn([OKHEAD + b"hello", b""]))
+    host = http_timing("https://example.com/").data["host"]
+    assert host == "example.com"
+    assert not any(c in host for c in "[]()/:")

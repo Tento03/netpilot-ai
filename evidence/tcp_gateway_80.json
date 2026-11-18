@@ -1,0 +1,17 @@
+{
+  "tool_call_id": "326fae679ea54ca1bd883b1c8bfbdf84",
+  "tool": "check_tcp_port",
+  "args": {
+    "host": "10.17.11.254",
+    "port": 80
+  },
+  "started_at": "2026-11-18T04:39:23.221835Z",
+  "duration_ms": 3009,
+  "status": "timeout",
+  "data": null,
+  "error": {
+    "code": "timeout",
+    "message": "connect to port 80 timed out on all tried IPs: 10.17.11.254"
+  },
+  "simulated": false
+}
