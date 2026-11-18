@@ -20,3 +20,4 @@ Gateway dibiarkan karena menjadi bukti inti. Output mentah ada di `evidence/_raw
 - Throughput satu koneksi adalah batas bawah, bukan kecepatan internet.
 - Status tool `ok` tidak berarti semua resolver berhasil; periksa `results[].ok` di check_dns.
 
+
