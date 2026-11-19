@@ -26,6 +26,8 @@ Rules:
 - Never propose automatic router or firewall changes. Answer in the user's language."""
 
 DEFAULT_MAX_ROUNDS = 8
+API_TIMEOUT_MS = 60_000      # per API call; SDK timeout unit assumed to be milliseconds
+API_RETRY_ATTEMPTS = 2       # SDK-level attempts (1 = no retry)
 
 
 @dataclass
@@ -56,7 +58,9 @@ def make_generate() -> Callable[..., Any]:
     missing = [n for n, v in (("GEMINI_API_KEY", key), ("GEMINI_MODEL", model)) if not v]
     if missing:
         raise RuntimeError("missing environment variable(s): " + ", ".join(missing))
-    client = genai.Client(api_key=key)
+    client = genai.Client(api_key=key, http_options=types.HttpOptions(
+        timeout=API_TIMEOUT_MS,
+        retry_options=types.HttpRetryOptions(attempts=API_RETRY_ATTEMPTS)))
     return lambda contents, config: client.models.generate_content(
         model=model, contents=contents, config=config)
 
@@ -74,7 +78,13 @@ def run_agent(question: str, dispatcher: Dispatcher, generate: Callable[..., Any
     contents: list[Any] = [types.Content(role="user", parts=[types.Part(text=question)])]
     trace: list[dict[str, Any]] = []
     for rnd in range(1, max_rounds + 1):
-        content, parts = _parts(generate(contents=contents, config=config))
+        try:
+            content, parts = _parts(generate(contents=contents, config=config))
+        except Exception as e:  # timeout, network, API error: stop cleanly with a reason
+            detail = f"{type(e).__name__}: {str(e)[:200]}"
+            trace.append({"round": rnd, "tool": None, "status": "api_error",
+                          "tool_call_id": None, "error": type(e).__name__, "detail": detail})
+            return AgentRun("", rnd, "api_error", trace)
         if content is None or not parts:
             return AgentRun("", rnd, "empty_response", trace)
         contents.append(content)

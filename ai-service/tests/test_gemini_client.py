@@ -104,3 +104,26 @@ def test_make_generate_requires_env_and_never_prints_values(monkeypatch):
     with pytest.raises(RuntimeError) as e:
         gc.make_generate()
     assert "GEMINI_API_KEY" in str(e.value) and "some-model" not in str(e.value)
+
+def test_api_timeout_stops_cleanly_with_reason(fake_ping):
+    def boom(contents, config):
+        raise TimeoutError("slow")
+    run = gc.run_agent("x", disp.Dispatcher(ctx=CTX), boom)
+    assert run.stopped_reason == "api_error" and run.text == ""
+    assert run.trace[-1]["error"] == "TimeoutError"
+
+
+def test_http_options_set_timeout_and_limited_retries(monkeypatch):
+    seen = {}
+
+    class FakeClient:
+        def __init__(self, api_key, http_options):
+            seen["opts"] = http_options
+            self.models = SimpleNamespace(generate_content=lambda **kw: None)
+
+    monkeypatch.setenv("GEMINI_API_KEY", "k")
+    monkeypatch.setenv("GEMINI_MODEL", "m")
+    monkeypatch.setattr(gc.genai, "Client", FakeClient)
+    gc.make_generate()
+    assert seen["opts"].timeout == gc.API_TIMEOUT_MS
+    assert seen["opts"].retry_options.attempts == gc.API_RETRY_ATTEMPTS

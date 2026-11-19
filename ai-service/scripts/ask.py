@@ -44,7 +44,8 @@ def main(argv: list[str]) -> int:
     run = run_agent(" ".join(argv), dispatcher, generate)
     print("== TRACE ==")
     for t in run.trace:
-        print(f"  round {t['round']}: {t['tool']} -> {t['status']} ({t['tool_call_id']})")
+            print(f"  round {t['round']}: {t['tool']} -> {t['status']} ({t['tool_call_id']})"
+              + (f" {t['detail']}" if t.get("detail") else ""))
     print(f"== {run.stopped_reason} | rounds={run.rounds} | tools={dispatcher.tool_calls_used} ==")
     print(run.text)
     raw = ROOT.parent / "evidence" / "_raw"
