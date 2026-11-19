@@ -12,6 +12,7 @@ sys.path.insert(0, str(ROOT))
 
 from app.agent.dispatcher import Dispatcher  # noqa: E402
 from app.agent.gemini_client import make_generate, run_agent  # noqa: E402
+from app.report.generator import generate_report  # noqa: E402
 
 
 def load_env(path: Path) -> None:
@@ -28,8 +29,10 @@ def load_env(path: Path) -> None:
 
 
 def main(argv: list[str]) -> int:
+    want_report = "--report" in argv
+    argv = [a for a in argv if a != "--report"]
     if not argv:
-        print('usage: python scripts/ask.py "<pertanyaan>"')
+        print('usage: python scripts/ask.py [--report] "<pertanyaan>"')
         return 2
     load_env(ROOT / ".env")
     try:
@@ -53,6 +56,14 @@ def main(argv: list[str]) -> int:
         "rejections": [r.model_dump(mode="json") for r in dispatcher.rejections],
     }, indent=2, ensure_ascii=False), encoding="utf-8")
     print("saved:", out)
+    if want_report:
+        gen = generate_report(" ".join(argv), dispatcher.evidence, generate)
+        print(f"== REPORT == {'FALLBACK' if gen.fell_back else 'valid'} | attempts={gen.attempts}")
+        print(gen.report.model_dump_json(indent=2))
+        for msg in gen.violations:
+            print("  violation:", msg)
+        out.with_name(out.name.replace("ask_", "report_")).write_text(
+            gen.report.model_dump_json(indent=2), encoding="utf-8")
     return 0
 
 
