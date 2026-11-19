@@ -101,3 +101,14 @@ def test_replay_dispatcher_keeps_validation_and_budget():
     ok = rd.dispatch("ping_host", {"host": "8.8.8.8", "count": 3})
     assert ok.simulated and ok.data["host"] == "8.8.8.8"
     assert rd.dispatch("ping_host", {"host": "8.8.8.8"}).error.code == "budget_exceeded"
+
+def test_on_event_streams_ordered_events_and_report_ready():
+    seen = []
+    state, d, _ = run_scenario("healthy", on_event=lambda e, data: seen.append(e))
+    assert seen[0] == "node_started" and seen[-1] == "report_ready"
+    assert {"tool_started", "tool_finished", "hypothesis_updated"} <= set(seen)
+
+
+def test_no_callback_behaves_as_before():
+    state, d, _ = run_scenario("healthy")
+    assert state["report"] is not None

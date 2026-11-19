@@ -7,6 +7,7 @@ import json
 import re
 from typing import Any, Callable
 
+from distro import name
 from google.genai import types
 from langgraph.graph import END, START, StateGraph
 
@@ -62,7 +63,8 @@ def _json_reply(generate: Callable[..., Any], contents: list[Any], config: Any) 
         return None, "bad_json"
 
 
-def build_graph(generate: Callable[..., Any], dispatcher: Dispatcher):
+def build_graph(generate: Callable[..., Any], dispatcher: Dispatcher,
+                on_event: Callable[[str, dict], None] | None = None):
     plain = lambda instr: types.GenerateContentConfig(  # noqa: E731
         system_instruction=instr, response_mime_type="application/json", temperature=0.1)
     act_config = tools_config()
@@ -132,9 +134,31 @@ def build_graph(generate: Callable[..., Any], dispatcher: Dispatcher):
         return "act"
 
     g = StateGraph(InvestigationState)
+    def wrapped(name: str, fn: Callable[[InvestigationState], dict]):
+        if on_event is None:
+            return fn
+
+        def inner(state: InvestigationState) -> dict:
+            on_event("node_started", {"node": name, "iteration": state.get("iteration", 0)})
+            before = len(dispatcher.evidence)
+            out = fn(state)
+            for r in dispatcher.evidence[before:]:
+                on_event("tool_started", {"tool": r.tool, "args": r.args})
+                on_event("tool_finished", {"tool": r.tool, "tool_call_id": r.tool_call_id,
+                                           "status": r.status.value, "duration_ms": r.duration_ms,
+                                           "simulated": r.simulated})
+            if name == "evaluate" and "hypotheses" in out:
+                on_event("hypothesis_updated", {"hypotheses": [
+                    {"id": h.id, "status": h.status.value, "evidence_refs": h.evidence_refs}
+                    for h in out["hypotheses"]]})
+            if name == "report" and out.get("report") is not None:
+                on_event("report_ready", {"report": out["report"].model_dump(mode="json")})
+            return out
+        return inner
+
     for name, fn in (("plan", plan), ("act", act), ("observe", observe),
                      ("evaluate", evaluate), ("report", report)):
-        g.add_node(name, fn)
+        g.add_node(name, wrapped(name, fn))
     g.add_edge(START, "plan")
     g.add_conditional_edges("plan", after_plan, {"report": "report", "act": "act"})
     g.add_conditional_edges("act", after_act, {"report": "report", "observe": "observe"})
@@ -145,9 +169,11 @@ def build_graph(generate: Callable[..., Any], dispatcher: Dispatcher):
 
 
 def run_investigation(question: str, generate: Callable[..., Any], budget: Budget | None = None,
-                      dispatcher: Dispatcher | None = None) -> tuple[InvestigationState, Dispatcher]:
+                      dispatcher: Dispatcher | None = None,
+                      on_event: Callable[[str, dict], None] | None = None,
+                      ) -> tuple[InvestigationState, Dispatcher]:
     budget = budget or Budget()
     dispatcher = dispatcher or Dispatcher(max_tool_calls=budget.max_tool_calls)
-    final = build_graph(generate, dispatcher).invoke(
+    final = build_graph(generate, dispatcher, on_event).invoke(
         new_state(question, budget), {"recursion_limit": 6 * budget.max_iterations + 10})
     return final, dispatcher

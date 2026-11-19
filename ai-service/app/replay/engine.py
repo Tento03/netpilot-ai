@@ -187,9 +187,10 @@ class TechnicianModel:
             "limitations": ["Data simulasi replay."], "simulated": False})
 
 
-def run_scenario(name: str, budget: Budget | None = None):
+def run_scenario(name: str, budget: Budget | None = None, on_event=None):
     budget = budget or Budget(max_iterations=8, max_tool_calls=12)
     model = TechnicianModel()
     state, d = run_investigation(f"Simulasi {name}: kenapa internet lambat?", model, budget,
-                                 ReplayDispatcher(get_scenario(name), budget.max_tool_calls))
+                                 ReplayDispatcher(get_scenario(name), budget.max_tool_calls),
+                                 on_event)
     return state, d, model
