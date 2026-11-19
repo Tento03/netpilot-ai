@@ -27,8 +27,10 @@ Rules:
 
 DEFAULT_MAX_ROUNDS = 8
 API_TIMEOUT_MS = 60_000      # per API call; SDK timeout unit assumed to be milliseconds
-API_RETRY_ATTEMPTS = 2       # SDK-level attempts (1 = no retry)
-
+API_RETRY_ATTEMPTS = 4       # total attempts per call (1 = no retry)
+API_RETRY_INITIAL_DELAY = 2.0  # seconds, assumed; verify with the field description
+API_RETRY_MAX_DELAY = 20.0
+API_RETRY_STATUS_CODES = [429, 503]
 
 @dataclass
 class AgentRun:
@@ -60,7 +62,10 @@ def make_generate() -> Callable[..., Any]:
         raise RuntimeError("missing environment variable(s): " + ", ".join(missing))
     client = genai.Client(api_key=key, http_options=types.HttpOptions(
         timeout=API_TIMEOUT_MS,
-        retry_options=types.HttpRetryOptions(attempts=API_RETRY_ATTEMPTS)))
+            retry_options=types.HttpRetryOptions(
+            attempts=API_RETRY_ATTEMPTS, initial_delay=API_RETRY_INITIAL_DELAY,
+            max_delay=API_RETRY_MAX_DELAY, exp_base=2.0, jitter=1.0,
+            http_status_codes=API_RETRY_STATUS_CODES)))
     return lambda contents, config: client.models.generate_content(
         model=model, contents=contents, config=config)
 

@@ -127,3 +127,18 @@ def test_http_options_set_timeout_and_limited_retries(monkeypatch):
     gc.make_generate()
     assert seen["opts"].timeout == gc.API_TIMEOUT_MS
     assert seen["opts"].retry_options.attempts == gc.API_RETRY_ATTEMPTS
+
+def test_retry_options_cover_overload_status_codes(monkeypatch):
+    seen = {}
+
+    class FakeClient:
+        def __init__(self, api_key, http_options):
+            seen["r"] = http_options.retry_options
+            self.models = SimpleNamespace(generate_content=lambda **kw: None)
+
+    monkeypatch.setenv("GEMINI_API_KEY", "k")
+    monkeypatch.setenv("GEMINI_MODEL", "m")
+    monkeypatch.setattr(gc.genai, "Client", FakeClient)
+    gc.make_generate()
+    assert 503 in seen["r"].http_status_codes and 429 in seen["r"].http_status_codes
+    assert seen["r"].attempts == gc.API_RETRY_ATTEMPTS
