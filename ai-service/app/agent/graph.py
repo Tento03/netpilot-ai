@@ -55,7 +55,7 @@ def _json_reply(generate: Callable[..., Any], contents: list[Any], config: Any) 
     try:
         _, parts = _parts(generate(contents=contents, config=config))
     except Exception as e:
-        return None, f"api_error: {type(e).__name__}"
+            return None, f"api_error: {type(e).__name__}: {str(e)[:120]}"
     try:
         return _json(_text(parts)), None
     except ValueError:

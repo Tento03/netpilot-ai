@@ -189,6 +189,8 @@ def minimal_report(evidence: list[ToolResult]) -> DiagnosisReport:
     return DiagnosisReport(
         summary="Laporan minimal: hanya fakta terukur, tanpa kesimpulan.",
         observations=obs,
-        limitations=["Laporan lengkap gagal validasi; tidak ada kesimpulan yang diambil."],
+        limitations=["Tidak ada bukti terukur (investigasi tidak berjalan, mis. API tidak tersedia)."
+                     if not evidence else
+                     "Laporan lengkap gagal validasi; tidak ada kesimpulan yang diambil."],
         simulated=any(r.simulated for r in evidence),
     )

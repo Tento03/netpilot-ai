@@ -13,6 +13,7 @@ sys.path.insert(0, str(ROOT))
 from app.agent.dispatcher import Dispatcher  # noqa: E402
 from app.agent.gemini_client import make_generate, run_agent  # noqa: E402
 from app.report.generator import generate_report  # noqa: E402
+from app.agent.graph import run_investigation  # noqa: E402
 
 
 def load_env(path: Path) -> None:
@@ -31,6 +32,8 @@ def load_env(path: Path) -> None:
 def main(argv: list[str]) -> int:
     want_report = "--report" in argv
     argv = [a for a in argv if a != "--report"]
+    use_graph = "--graph" in argv
+    argv = [a for a in argv if a != "--graph"]
     if not argv:
         print('usage: python scripts/ask.py [--report] "<pertanyaan>"')
         return 2
@@ -40,6 +43,29 @@ def main(argv: list[str]) -> int:
     except RuntimeError as e:
         print(e)
         return 2
+    if use_graph:
+        state, dispatcher = run_investigation(" ".join(argv), generate)
+        print("== HYPOTHESES ==")
+        for h in state["hypotheses"]:
+            print(f"  {h.id} [{h.status.value}] {h.statement} refs={len(h.evidence_refs)}")
+        print(f"== graph | iterations={state['iteration']} | tools={dispatcher.tool_calls_used}"
+              f" | stop={state.get('stop_reason')} ==")
+        for r in dispatcher.evidence:
+            print(f"  {r.tool} {r.args} -> {r.status.value} ({r.tool_call_id})")
+        rep = state["report"]
+        print(rep.model_dump_json(indent=2) if rep else "(tidak ada laporan)")
+        raw = ROOT.parent / "evidence" / "_raw"
+        raw.mkdir(parents=True, exist_ok=True)
+        out = raw / f"graph_{datetime.now():%Y%m%d_%H%M%S}.json"
+        out.write_text(json.dumps({
+            "question": " ".join(argv), "stop_reason": state.get("stop_reason"),
+            "hypotheses": [{"id": h.id, "statement": h.statement, "status": h.status.value,
+                            "evidence_refs": h.evidence_refs} for h in state["hypotheses"]],
+            "evidence": [r.model_dump(mode="json") for r in dispatcher.evidence],
+            "report": rep.model_dump(mode="json") if rep else None,
+        }, indent=2, ensure_ascii=False), encoding="utf-8")
+        print("saved:", out)
+        return 0
     dispatcher = Dispatcher()
     run = run_agent(" ".join(argv), dispatcher, generate)
     print("== TRACE ==")
