@@ -84,6 +84,10 @@ class Dispatcher:
                                     system_dns=tuple(info.get("dns_servers") or ()))
         return self._ctx
 
+    def _execute(self, spec: ToolSpec, clean: dict[str, Any]) -> ToolResult:
+        """Hook: replay mode overrides this to answer from fixtures."""
+        return spec.func(**clean, ctx=self._context())
+
     def _reject(self, name: Any, args: Any, err: ValidationFailure) -> ToolResult:
         label = _CTRL.sub("?", str(name))[:40]
         safe_args = _clean(args) if isinstance(args, dict) else {}
@@ -107,6 +111,6 @@ class Dispatcher:
         except ValidationFailure as e:
             return self._reject(name, args, e)
         self.tool_calls_used += 1
-        result = spec.func(**clean, ctx=self._context())
+        result = self._execute(spec, clean)
         self.evidence.append(result)
         return result
