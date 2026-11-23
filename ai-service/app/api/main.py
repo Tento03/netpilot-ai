@@ -16,6 +16,9 @@ from app.api.security import MAX_QUESTION_LEN, token_ok
 from app.replay.engine import run_scenario
 from app.replay.scenarios import SCENARIO_NAMES
 
+from pathlib import Path
+import os
+
 app = FastAPI(title="NetPilot AI service")
 _DONE = object()
 
@@ -26,6 +29,17 @@ class InvestigateRequest(BaseModel):
     mode: Literal["live", "replay"] = "live"
     scenario: str | None = None
 
+def _load_env() -> None:
+    p = Path(__file__).resolve().parents[2] / ".env"
+    if not p.exists():
+        return
+    for line in p.read_text(encoding="utf-8-sig").splitlines():
+        line = line.strip()
+        if line and not line.startswith("#") and "=" in line:
+            k, v = line.split("=", 1)
+            os.environ.setdefault(k.strip(), v.strip().strip('"').strip("'"))
+
+_load_env()
 
 @app.get("/health")
 def health() -> dict:
